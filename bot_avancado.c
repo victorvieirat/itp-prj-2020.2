@@ -14,8 +14,8 @@ int main() {
 	Hand mao_morto, mao_atual, aux_mao, lixo;
 	Sequence jogo_adv, jogo_meu;
 
-	jogo_adv.mao = malloc(sizeof(Hand*));
-	jogo_meu.mao = malloc(sizeof(Hand*));
+	jogo_adv.mao = malloc(sizeof(Hand));
+	jogo_meu.mao = malloc(sizeof(Hand));
 	lixo.cartas = malloc(sizeof(Cards));
 
 	jogo_adv.linha = 0;
@@ -82,8 +82,7 @@ int main() {
 				ordernar(&jogo_adv.mao[indice],1);
 			}	
 		} while (strcmp(line, myId)); // sai do laço quando for a sua vez!
-
-		if(jogo_lixo(&mao_atual, top_morto ,&jogo_meu)){
+		if(jogo_lixo(&mao_atual, top_morto ,&jogo_meu)){ //Ta aqui o problema
 			lixo.tamanho = 0;
 			ordernar(&mao_atual,0);
 			readline(line);
@@ -109,6 +108,7 @@ int main() {
 		ordernar(&mao_atual,0);  
 
 		//Imprimir jogos feitos
+		/*
 		fprintf(stderr, "S: ");	
 		for(int a=0; a<jogo_meu.linha;a++){
 			for(int b=0; b<jogo_meu.mao[a].tamanho;b++){
@@ -117,14 +117,16 @@ int main() {
 			fprintf(stderr, "\n");
 		}
 		fprintf(stderr, ":E\n");
-		
+		*/
 		
 		indice = pior_carta(mao_atual);  
 		printf("DISCARD ");
 		imprimir(mao_atual.cartas[indice]);
 		adicionar_carta(&lixo, mao_atual.cartas[indice]);
 		mao_atual.cartas[indice].naipe = Removido;
-		ordernar(&mao_atual,0);
+		if(mao_atual.tamanho > 1){
+			ordernar(&mao_atual,0);
+		}
 		printf("\n");
 	}
 	return 0;

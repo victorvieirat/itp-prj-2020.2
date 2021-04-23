@@ -43,4 +43,5 @@ Para funcionar é necessário:
 
 ### To do
 - Ajeitar primeira parte jogar_lixo;
-
+Util colocar no readme
+https://www.youtube.com/watch?v=KVlGx-9CuO4&ab_channel=Programa%C3%A7%C3%A3oDin%C3%A2mica

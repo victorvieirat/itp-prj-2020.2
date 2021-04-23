@@ -13,7 +13,7 @@ void readline(char *line) {
 }
 
 Cards converte_carta(char *line){
-    char  aux1[2];
+    char  aux1[10];
     Cards carta;
     if(strstr(line,"♥")){
             carta.naipe= Copas;
@@ -102,39 +102,47 @@ void ordernar(Hand *mao, int organiza_mele){
         mao->cartas = realloc(mao->cartas ,sizeof(Cards) * mao->tamanho);   
     } 
     //Organização se tiver melé
-    
+    int indice_mele;
     if(organiza_mele){
         for(int a=0;a<mao->tamanho-1; a++){
             if(mao->cartas[a].numero+ 2 == mao->cartas[a+1].numero && mao->cartas[a].numero != 2){
-                for(int b=0;a<mao->tamanho; a++){
+                for(int b=0;b<mao->tamanho; b++){
                     if(mao->cartas[b].numero == 2){
-                        naip_aux = mao->cartas[b].naipe;
-                        num_aux = mao->cartas[b].numero;
-                        mao->cartas[b].naipe= mao->cartas[a].naipe;
-                        mao->cartas[b].numero = mao->cartas[a].numero;
-                        mao->cartas[a].naipe= naip_aux;
-                        mao->cartas[a].numero = num_aux;
-                        for(int c=0; a<mao->tamanho; c++){
-                            for(int d=c; d<mao->tamanho; d++){
-                                if(c != b && d != b){
-                                    if(mao->cartas[c].numero> mao->cartas[d].numero){
-                                        naip_aux = mao->cartas[d].naipe;
-                                        num_aux = mao->cartas[d].numero;
-                                        mao->cartas[d].naipe= mao->cartas[c].naipe;
-                                        mao->cartas[d].numero = mao->cartas[c].numero;
-                                        mao->cartas[c].naipe= naip_aux;
-                                        mao->cartas[c].numero = num_aux;
-                                    }
+                        indice_mele = b;
+                        if(mao->cartas[a].naipe == mao->cartas[b].naipe){
+                            for(int c=0;c<mao->tamanho; c++){
+                                if(mao->cartas[c].numero == 2 && c != b){
+                                    indice_mele =c;
+                                    break;
                                 }
                             }
                         }
-                        return;
+                        if(indice_mele < a){
+                            for(int c = indice_mele; c <a;c++){
+                                    naip_aux = mao->cartas[c+1].naipe;
+                                    num_aux = mao->cartas[c+1].numero;
+                                    mao->cartas[c].naipe= mao->cartas[c+1].naipe;
+                                    mao->cartas[c].numero = mao->cartas[c+1].numero;
+                                    mao->cartas[c+1].naipe= naip_aux;
+                                    mao->cartas[c+1].numero = num_aux;
+                                }
+                        }else{
+                            for(int c = indice_mele; c >a+1;c--){
+                                    naip_aux = mao->cartas[c-1].naipe;
+                                    num_aux = mao->cartas[c-1].numero;
+                                    mao->cartas[c].naipe= mao->cartas[c-1].naipe;
+                                    mao->cartas[c].numero = mao->cartas[c-1].numero;
+                                    mao->cartas[c-1].naipe= naip_aux;
+                                    mao->cartas[c-1].numero = num_aux;
+                                }
+                        }
+
                     }
+
                 }
             }
         }
     }
-    
     return;
 }
 
@@ -216,8 +224,16 @@ void imprimir_console(int num, int naipe){
 void adicionar_carta(Hand *mao, Cards nova_carta){
     if(mao->tamanho == 0)
         mao->cartas = malloc(sizeof(Cards));
-    else
-        mao->cartas = realloc(mao->cartas, sizeof(Cards)  * mao->tamanho+1);
+    else{
+        //fprintf(stderr,"%d\n", (mao->tamanho+1));
+         mao->cartas = realloc(mao->cartas, sizeof(Cards)  *(mao->tamanho+1));
+        //mao->cartas = realloc(mao->cartas, sizeof(Cards)*(500));
+        
+        if(mao->cartas==NULL){
+            exit(57);
+            fprintf(stderr,"57\n");
+        }
+    }
     mao->cartas[mao->tamanho].numero = nova_carta.numero;
     mao->cartas[mao->tamanho].naipe = nova_carta.naipe;
     mao->tamanho++;
@@ -237,17 +253,17 @@ void baixar_jogos(Hand *mao, Sequence *jogos){
                     imprimir(mao->cartas[b]);
                 }
                 printf(" ]\n");
-                (*jogos).linha++;
-                if((*jogos).linha != 1){
-                    (*jogos).mao = realloc((*jogos).mao, sizeof(Hand)  * (*jogos).linha);
+                jogos->linha++;
+                if(jogos->linha != 1){
+                    jogos->mao = realloc(jogos->mao, sizeof(Hand)  * jogos->linha);
                 }     
-                (*jogos).mao[(*jogos).linha-1].tamanho = 0; 
+                jogos->mao[jogos->linha-1].tamanho = 0; 
                 for(int b= a-(sequencia-1); b<=a;b++){
-                    adicionar_carta(&((*jogos).mao[(*jogos).linha-1]), mao->cartas[b]);
+                    adicionar_carta(&(jogos->mao[jogos->linha-1]), mao->cartas[b]);
                     mao->cartas[b].naipe = Removido;
                 }
                 ordernar(mao, 0);
-                ordernar(&(*jogos).mao[(*jogos).linha-1], 1);
+                ordernar(&jogos->mao[jogos->linha-1], 1);
                 a =0;
             }
             sequencia =1 ;
@@ -267,54 +283,63 @@ int jogo_lixo(Hand *mao, Cards lixo, Sequence *jogos){
                 printf(" ");
                 imprimir(mao->cartas[a+1]);
                 printf(" ]\n");  
-                (*jogos).linha++;
-                if((*jogos).linha != 1){
-                    (*jogos).mao = realloc((*jogos).mao, sizeof(Hand)  * (*jogos).linha);
+                jogos->linha++;
+                if(jogos->linha != 1){
+                    jogos->mao = realloc(jogos->mao, sizeof(Hand) * jogos->linha);
                 }
-                (*jogos).mao[(*jogos).linha-1].tamanho = 0; 
-                adicionar_carta(&(*jogos).mao[(*jogos).linha-1], mao->cartas[a]);
-                adicionar_carta(&(*jogos).mao[(*jogos).linha-1], mao->cartas[a+1]);
-                adicionar_carta(&(*jogos).mao[(*jogos).linha-1], lixo);
+                jogos->mao[jogos->linha-1].tamanho = 0; 
+                adicionar_carta(&jogos->mao[jogos->linha-1], mao->cartas[a]);
+                adicionar_carta(&jogos->mao[jogos->linha-1], mao->cartas[a+1]);
+                adicionar_carta(&jogos->mao[jogos->linha-1], lixo);
 
-                ordernar(&(*jogos).mao[(*jogos).linha-1],1);
+                ordernar(&jogos->mao[jogos->linha-1],1);
                 mao->cartas[a].naipe = Removido;
                 mao->cartas[a+1].naipe = Removido;
                 return 1;
             }
         }
     }
-    for(int a=0;a <mao->tamanho-1; a++){         
+    fprintf(stderr,"Primeira parte ok\n");
+    for(int a=0;a <mao->tamanho-1; a++){  
+        fprintf(stderr,"1");       
         if(lixo.naipe == mao->cartas[a].naipe    &&
         (lixo.numero == mao->cartas[a].numero +1 ||
         lixo.numero == mao->cartas[a].numero -1  ||
         lixo.numero == mao->cartas[a].numero +2  ||
         lixo.numero == mao->cartas[a].numero -2)){                       
             for(int b=0;b <mao->tamanho; b++){
+                fprintf(stderr,"2");
                 if(mao->cartas[b].numero == 2 && a != b){
-                    (*jogos).linha++;
-                    if((*jogos).linha != 1){
-                        (*jogos).mao = realloc((*jogos).mao, sizeof(Hand)  * (*jogos).linha);
+                    jogos->linha++;
+                    if(jogos->linha != 1){
+                        jogos->mao = realloc(jogos->mao, sizeof(Hand) * jogos->linha);
                     }
-                    adicionar_carta(&(*jogos).mao[(*jogos).linha-1], mao->cartas[a]);
-                    adicionar_carta(&(*jogos).mao[(*jogos).linha-1], lixo);
+                    jogos->mao[jogos->linha-1].tamanho = 0; 
+                    adicionar_carta(&jogos->mao[jogos->linha-1], mao->cartas[a]);
+                    adicionar_carta(&jogos->mao[jogos->linha-1], lixo);
                     printf("GET_DISCARD [ ");
                     imprimir(mao->cartas[a]);
                     printf(" ");
                     for(int c=b;c <mao->tamanho; c++){
+                        fprintf(stderr,"3");
                         if(mao->cartas[c].numero == 2 &&mao->cartas[c].naipe == mao->cartas[a].naipe){
-                            adicionar_carta(&(*jogos).mao[(*jogos).linha-1], mao->cartas[c]);
+                            fprintf(stderr,"4");
+                            adicionar_carta(&jogos->mao[jogos->linha-1], mao->cartas[c]);
+                           fprintf(stderr,"(4.1)"); 
                             imprimir(mao->cartas[c]);
-                            (*jogos).mao[(*jogos).linha-1].tamanho = 0; 
-                            ordernar(&(*jogos).mao[(*jogos).linha-1],1);
+                            fprintf(stderr,"(4.2)");
+                            ordernar(&jogos->mao[jogos->linha-1],1);
+                            fprintf(stderr,"(4.3)");
                             printf(" ]\n");
                             mao->cartas[c].naipe = Removido;
                             mao->cartas[a].naipe = Removido;
                             return 1;
                         }
                     }
+                    fprintf(stderr,"5");
                     imprimir(mao->cartas[b]);
-                    adicionar_carta(&(*jogos).mao[(*jogos).linha-1], mao->cartas[b]);
-                    ordernar(&(*jogos).mao[(*jogos).linha-1],1);
+                    adicionar_carta(&jogos->mao[jogos->linha-1], mao->cartas[b]);
+                    ordernar(&jogos->mao[jogos->linha-1],1);
                     printf(" ]\n");
                     mao->cartas[b].naipe = Removido;
                     mao->cartas[a].naipe = Removido;
@@ -330,25 +355,25 @@ void anexar_cartas(Hand *mao, Sequence *jogos){
     Suit linha_naipe;
     int indice_mele = -1, valor;
     for(int a=0;a <mao->tamanho;a++){                       //Passa pelas cartas da mao
-        for(int b=0; b<(*jogos).linha; b++){                //Passa pelos jogos feitos
-            for(int c=0; c <(*jogos).mao[b].tamanho; c++){
-                if((*jogos).mao[b].cartas[c].numero != 2)
-                    linha_naipe = (*jogos).mao[b].cartas[c].naipe;
+        for(int b=0; b<jogos->linha; b++){                  //Passa pelos jogos feitos
+            for(int c=0; c <jogos->mao[b].tamanho; c++){
+                if(jogos->mao[b].cartas[c].numero != 2)
+                    linha_naipe = jogos->mao[b].cartas[c].naipe;
                 else
                     indice_mele = c;
             }
             if(mao->cartas[a].naipe == linha_naipe && mao->cartas[a].numero != 2){ //Se tem o mesmo naipe...
-                if((*jogos).mao[b].cartas[0].numero == 2){
-                    valor = (*jogos).mao[b].cartas[1].numero -1;
-                    linha_naipe  = (*jogos).mao[b].cartas[1].naipe;
+                if(jogos->mao[b].cartas[0].numero == 2){
+                    valor = jogos->mao[b].cartas[1].numero -1;
+                    linha_naipe  = jogos->mao[b].cartas[1].naipe;
                 }else{
-                    valor = (*jogos).mao[b].cartas[0].numero;
-                    linha_naipe  = (*jogos).mao[b].cartas[0].naipe;
+                    valor = jogos->mao[b].cartas[0].numero;
+                    linha_naipe  = jogos->mao[b].cartas[0].naipe;
                 } 
                 if(valor == mao->cartas[a].numero + 1 && mao->cartas[a].naipe == linha_naipe){
                     printf("MELD_JOIN %d [ ", b);
                     do{ 
-                        adicionar_carta(&(*jogos).mao[b], mao->cartas[a]);
+                        adicionar_carta(&jogos->mao[b], mao->cartas[a]);
                         imprimir(mao->cartas[a]);
                         printf(" ");
                         mao->cartas[a].naipe = Removido;
@@ -356,14 +381,15 @@ void anexar_cartas(Hand *mao, Sequence *jogos){
                     } while(a >= 0 && mao->cartas[a].naipe ==  mao->cartas[a+1].naipe &&
                             mao->cartas[a].numero==  mao->cartas[a+1].numero -1);
                     printf("]\n");
-                    
+                    if(a < 0)
+                        a =0;
                     ordernar(mao,0);
-                    ordernar(&(*jogos).mao[b],1);
-                }else if((*jogos).mao[b].cartas[(*jogos).mao[b].tamanho - 1].numero == mao->cartas[a].numero - 1  
-                && indice_mele != (*jogos).mao[b].tamanho - 1 && mao->cartas[a].naipe == linha_naipe){
+                    ordernar(&jogos->mao[b],1);
+                }else if(jogos->mao[b].cartas[jogos->mao[b].tamanho - 1].numero == mao->cartas[a].numero - 1  
+                && indice_mele != jogos->mao[b].tamanho - 1 && mao->cartas[a].naipe == linha_naipe){
                     printf("MELD_JOIN %d [ ", b);
                     do{
-                        adicionar_carta(&(*jogos).mao[b], mao->cartas[a]);
+                        adicionar_carta(&jogos->mao[b], mao->cartas[a]);
                         imprimir(mao->cartas[a]);
                         printf(" ");
                         mao->cartas[a].naipe = Removido;
@@ -371,8 +397,9 @@ void anexar_cartas(Hand *mao, Sequence *jogos){
                     } while (a < mao->tamanho && mao->cartas[a].naipe ==  mao->cartas[a-1].naipe &&
                             mao->cartas[a].numero==  mao->cartas[a+1].numero -1 && a != indice_mele);
                     printf("]\n");
+                    a =0;
                     ordernar(mao,0);
-                    ordernar(&(*jogos).mao[b],1);         
+                    ordernar(&jogos->mao[b],1);         
                 }
                 
             }
@@ -382,6 +409,8 @@ void anexar_cartas(Hand *mao, Sequence *jogos){
 }
 
 int pior_carta(Hand mao){
+    return 0;
+    /*
     int indice = 0, maior_diferenca=0;
     for(int a=0; a< mao.tamanho; a++){
         if((a > 0 && a < mao.tamanho -1 && mao.cartas[a].naipe != mao.cartas[a-1].naipe && mao.cartas[a+1].naipe != mao.cartas[a].naipe) ||
@@ -408,25 +437,84 @@ int pior_carta(Hand mao){
         }
     }
     return indice;
+    */
 }
 
 /*
+
 void anexar_cartas(Hand *mao, Sequence *jogos){
     Suit linha_naipe;
-    int indice_mele = -1;
-    for(int a=0;a <mao->tamanho;a++){ //Passa pelas cartas da mao
-        for(int b=0; b<(*jogos).linha; b++){ //Passa pelos jogos feitos
-            for(int c=0; c <(*jogos).mao[b].tamanho; c++){
-                if((*jogos).mao[b].cartas[c].numero != 2)
-                    linha_naipe = (*jogos).mao[b].cartas[c].naipe;
+    int indice_mele = -1, valor;
+    fprintf(stderr, "\nYAMETE KUDASSAI: %d\n", mao->tamanho);
+    for(int a=0;a <mao->tamanho;a++){  
+        fprintf(stderr, "\nYAMETE KUDASSAI: %d\n", mao->tamanho);                     //Passa pelas cartas da mao
+        for(int b=0; b<jogos->linha; b++){                  //Passa pelos jogos feitos
+            for(int c=0; c <jogos->mao[b].tamanho; c++){
+                if(jogos->mao[b].cartas[c].numero != 2)
+                    linha_naipe = jogos->mao[b].cartas[c].naipe;
                 else
                     indice_mele = c;
             }
             if(mao->cartas[a].naipe == linha_naipe && mao->cartas[a].numero != 2){ //Se tem o mesmo naipe...
-                if((*jogos).mao[b].cartas[0].numero == mao->cartas[a].numero + 1 && indice_mele != 0){
+                if(jogos->mao[b].cartas[0].numero == 2){
+                    valor = jogos->mao[b].cartas[1].numero -1;
+                    linha_naipe  = jogos->mao[b].cartas[1].naipe;
+                }else{
+                    valor = jogos->mao[b].cartas[0].numero;
+                    linha_naipe  = jogos->mao[b].cartas[0].naipe;
+                } 
+                if(valor == mao->cartas[a].numero + 1 && mao->cartas[a].naipe == linha_naipe){
                     printf("MELD_JOIN %d [ ", b);
                     do{ 
-                        adicionar_carta(&(*jogos).mao[b], mao->cartas[a]);
+                        adicionar_carta(&jogos->mao[b], mao->cartas[a]);
+                        imprimir(mao->cartas[a]);
+                        printf(" ");
+                        mao->cartas[a].naipe = Removido;
+                        a--;
+                    } while(a >= 0 && mao->cartas[a].naipe ==  mao->cartas[a+1].naipe &&
+                            mao->cartas[a].numero==  mao->cartas[a+1].numero -1);
+                    printf("]\n");
+                    if(a < 0)
+                        a =0;
+                    ordernar(mao,0);
+                    ordernar(&jogos->mao[b],1);
+                }else if(jogos->mao[b].cartas[jogos->mao[b].tamanho - 1].numero == mao->cartas[a].numero - 1  
+                && indice_mele != jogos->mao[b].tamanho - 1 && mao->cartas[a].naipe == linha_naipe){
+                    printf("MELD_JOIN %d [ ", b);
+                    do{
+                        adicionar_carta(&jogos->mao[b], mao->cartas[a]);
+                        imprimir(mao->cartas[a]);
+                        printf(" ");
+                        mao->cartas[a].naipe = Removido;
+                        a++;
+                    } while (a < mao->tamanho && mao->cartas[a].naipe ==  mao->cartas[a-1].naipe &&
+                            mao->cartas[a].numero==  mao->cartas[a+1].numero -1 && a != indice_mele);
+                    printf("]\n");
+                    ordernar(mao,0);
+                    ordernar(&jogos->mao[b],1);         
+                }
+                
+            }
+        }
+    }
+    return;
+}
+void anexar_cartas(Hand *mao, Sequence *jogos){
+    Suit linha_naipe;
+    int indice_mele = -1;
+    for(int a=0;a <mao->tamanho;a++){ //Passa pelas cartas da mao
+        for(int b=0; b<jogos->linha; b++){ //Passa pelos jogos feitos
+            for(int c=0; c <jogos->mao[b].tamanho; c++){
+                if(jogos->mao[b].cartas[c].numero != 2)
+                    linha_naipe = jogos->mao[b].cartas[c].naipe;
+                else
+                    indice_mele = c;
+            }
+            if(mao->cartas[a].naipe == linha_naipe && mao->cartas[a].numero != 2){ //Se tem o mesmo naipe...
+                if(jogos->mao[b].cartas[0].numero == mao->cartas[a].numero + 1 && indice_mele != 0){
+                    printf("MELD_JOIN %d [ ", b);
+                    do{ 
+                        adicionar_carta(&jogos->mao[b], mao->cartas[a]);
                         imprimir(mao->cartas[a]);
                         printf(" ");
                         mao->cartas[a].naipe = Removido;
@@ -437,11 +525,11 @@ void anexar_cartas(Hand *mao, Sequence *jogos){
                     printf("]\n");
                     
                     ordernar(mao);
-                    ordernar(&(*jogos).mao[b]);
-                }else if((*jogos).mao[b].cartas[(*jogos).mao[b].tamanho - 1].numero == mao->cartas[a].numero - 1  && indice_mele != (*jogos).mao[b].tamanho - 1){
+                    ordernar(&jogos->mao[b]);
+                }else if(jogos->mao[b].cartas[jogos->mao[b].tamanho - 1].numero == mao->cartas[a].numero - 1  && indice_mele != jogos->mao[b].tamanho - 1){
                     printf("MELD_JOIN %d [ ", b);
                     do{
-                        adicionar_carta(&(*jogos).mao[b], mao->cartas[a]);
+                        adicionar_carta(&jogos->mao[b], mao->cartas[a]);
                         imprimir(mao->cartas[a]);
                         printf(" ");
                         mao->cartas[a].naipe = Removido;
@@ -450,7 +538,7 @@ void anexar_cartas(Hand *mao, Sequence *jogos){
                             mao->cartas[a].numero==  mao->cartas[a+1].numero -1 && a != indice_mele);
                     printf("]\n");
                     ordernar(mao);
-                    ordernar(&(*jogos).mao[b]);         
+                    ordernar(&jogos->mao[b]);         
                 }
 
             }
